@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Classroom Attendance - MAN IC Bangka Tengah</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar { background-color: #0d6efd; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card-header { background-color: #fff; border-bottom: 1px solid #eee; border-radius: 12px 12px 0 0 !important; font-weight: bold;}
+        .table-hover tbody tr:hover { background-color: #f1f5f9; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fa-solid fa-graduation-cap me-2"></i>Smart Classroom Attendance | MAN IC Bangka Tengah
+            </a>
+            <span class="text-white font-monospace small"><i class="fa-solid fa-user-shield me-1"></i>Portal Guru / Admin</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- BARIS 1: SETTING WAKTU & RIWAYAT ABSEN -->
+        <div class="row">
+            <!-- Kolom Pengaturan Waktu -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header text-primary">
+                        <i class="fa-solid fa-gear me-2"></i>Pengaturan Jam Absen
+                    </div>
+                    <div class="card-body">
+                        <form id="formPengaturan">
+                            <h6 class="text-muted mb-3">Batas Tepat Waktu (Masuk)</h6>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <label class="form-label">Jam</label>
+                                    <input type="number" id="jamMasuk" class="form-control" min="0" max="23" required>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label">Menit</label>
+                                    <input type="number" id="menitMasuk" class="form-control" min="0" max="59" required>
+                                </div>
+                            </div>
+
+                            <h6 class="text-muted mb-3 mt-4">Batas Akhir (Tutup)</h6>
+                            <div class="row mb-4">
+                                <div class="col">
+                                    <label class="form-label">Jam</label>
+                                    <input type="number" id="jamTutup" class="form-control" min="0" max="23" required>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label">Menit</label>
+                                    <input type="number" id="menitTutup" class="form-control" min="0" max="59" required>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-primary w-100" onclick="simpanPengaturan()">
+                                <i class="fa-solid fa-save me-2"></i>Simpan Pengaturan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kolom Tabel Riwayat -->
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header text-primary d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-list-check me-2"></i>Riwayat Absensi Hari Ini</span>
+                        <span class="badge bg-primary" id="totalAbsen">0 Data</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th>Waktu</th>
+                                        <th>UID Kartu</th>
+                                        <th>Nama Siswa</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBodyRiwayat">
+                                    <tr><td colspan="4" class="text-center text-muted py-4">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BARIS 2: KELOLA DATA SISWA & KARTU BARU -->
+        <div class="row mt-4">
+            <!-- Form Tambah User & Notifikasi Kartu Baru -->
+            <div class="col-md-4">
+                <div class="card mb-3 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <i class="fa-solid fa-id-card me-2"></i>Deteksi Kartu Baru (Tap)
+                    </div>
+                    <div class="card-body">
+                        <div id="infoKartuBaru" class="text-muted small">
+                            Belum ada kartu baru yang ditap di alat.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header text-success">
+                        <i class="fa-solid fa-user-plus me-2"></i>Pendaftaran Kartu Siswa
+                    </div>
+                    <div class="card-body">
+                        <form id="formUser">
+                            <div class="mb-3">
+                                <label class="form-label">UID Kartu RFID</label>
+                                <input type="text" id="uidInput" class="form-control" placeholder="Contoh: B1701707" required style="text-transform: uppercase;">
+                                <small class="text-muted">Tap kartu di alat, lalu klik tombol di kotak kuning di atas.</small>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Nama Lengkap Siswa</label>
+                                <input type="text" id="namaInput" class="form-control" placeholder="Masukkan nama siswa..." required>
+                            </div>
+                            <button type="button" class="btn btn-success w-100" onclick="simpanUser()">
+                                <i class="fa-solid fa-floppy-disk me-2"></i>Simpan Data Siswa
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel Data User -->
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header text-success d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-users me-2"></i>Data Siswa Terdaftar</span>
+                        <span class="badge bg-success" id="totalUser">0 Terdaftar</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light" style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th>No</th>
+                                        <th>UID Kartu</th>
+                                        <th>Nama Siswa</th>
+                                        <th class="text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBodyUser">
+                                    <tr><td colspan="4" class="text-center text-muted py-4">Memuat data siswa...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, onValue, update, set, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyClVwAWtblq7AJfcGdw59ePDUoqn4cRPvU",
+            authDomain: "absensi-iot-man-ic.firebaseapp.com",
+            databaseURL: "https://absensi-iot-man-ic-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "absensi-iot-man-ic",
+            storageBucket: "absensi-iot-man-ic.appspot.com",
+            messagingSenderId: "438917329938",
+            appId: "1:438917329938:web:7a0498d5f513666da2d4cb",
+            measurementId: "G-NREP0J14DB"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const settingsRef = ref(db, 'settings');
+        const logRef = ref(db, 'log_absensi');
+        const usersRef = ref(db, 'users');
+        const kartuBaruRef = ref(db, 'kartu_baru_terbaca');
+
+        // ================= 1. PENGATURAN WAKTU =================
+        onValue(settingsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('jamMasuk').value = data.jamMasuk || 0;
+                document.getElementById('menitMasuk').value = data.menitMasuk || 0;
+                document.getElementById('jamTutup').value = data.jamTutup || 0;
+                document.getElementById('menitTutup').value = data.menitTutup || 0;
+            }
+        });
+
+        window.simpanPengaturan = function() {
+            const jM = parseInt(document.getElementById('jamMasuk').value);
+            const mM = parseInt(document.getElementById('menitMasuk').value);
+            const jT = parseInt(document.getElementById('jamTutup').value);
+            const mT = parseInt(document.getElementById('menitTutup').value);
+
+            if(isNaN(jM) || isNaN(mM) || isNaN(jT) || isNaN(mT)) { alert("Isi form waktu dengan benar!"); return; }
+
+            update(settingsRef, { jamMasuk: jM, menitMasuk: mM, jamTutup: jT, menitTutup: mT })
+                .then(() => alert("Pengaturan waktu tersimpan!"))
+                .catch(err => alert("Gagal: " + err.message));
+        };
+
+        // ================= 2. TABEL RIWAYAT ABSEN =================
+        onValue(logRef, (snapshot) => {
+            const data = snapshot.val();
+            const tbody = document.getElementById('tableBodyRiwayat');
+            const totalLabel = document.getElementById('totalAbsen');
+            tbody.innerHTML = ""; 
+
+            if (data) {
+                const logsArray = Object.keys(data).map(key => data[key]);
+                logsArray.sort((a, b) => new Date(b.waktu) - new Date(a.waktu));
+                totalLabel.innerText = logsArray.length + " Data";
+
+                logsArray.forEach(log => {
+                    let badgeClass = log.status === 'Tepat Waktu' ? 'bg-success' : 
+                                   (log.status === 'Terlambat' ? 'bg-warning text-dark' : 'bg-danger');
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><i class="fa-regular fa-calendar me-2 text-muted"></i>${log.waktu}</td>
+                            <td><code>${log.uid}</code></td>
+                            <td class="fw-bold">${log.nama}</td>
+                            <td><span class="badge ${badgeClass}">${log.status}</span></td>
+                        </tr>`;
+                });
+            } else {
+                totalLabel.innerText = "0 Data";
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Belum ada riwayat absensi.</td></tr>`;
+            }
+        });
+
+        // ================= 3. DETEKSI KARTU BARU TERBACA =================
+        onValue(kartuBaruRef, (snapshot) => {
+            const data = snapshot.val();
+            const infoDiv = document.getElementById('infoKartuBaru');
+            if (data && data.uid) {
+                infoDiv.innerHTML = `
+                    <div class="alert alert-success p-2 mb-0">
+                        <strong>UID Terdeteksi:</strong> <code>${data.uid}</code><br>
+                        <small class="text-muted">${data.waktu}</small><br>
+                        <button class="btn btn-sm btn-dark mt-2 w-100" onclick="gunakanUID('${data.uid}')">
+                            <i class="fa-solid fa-arrow-down me-1"></i> Gunakan UID Ini
+                        </button>
+                    </div>
+                `;
+            } else {
+                infoDiv.innerHTML = `<span class="text-muted">Belum ada kartu baru yang ditap di alat.</span>`;
+            }
+        });
+
+        window.gunakanUID = function(uid) {
+            document.getElementById('uidInput').value = uid;
+            document.getElementById('namaInput').focus();
+        };
+
+        // ================= 4. KELOLA DATA SISWA =================
+        onValue(usersRef, (snapshot) => {
+            const data = snapshot.val();
+            const tbody = document.getElementById('tableBodyUser');
+            const totalLabel = document.getElementById('totalUser');
+            tbody.innerHTML = "";
+
+            if (data) {
+                let no = 1;
+                for (let uid in data) {
+                    const namaSiswa = data[uid].nama;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${no++}</td>
+                            <td><code>${uid}</code></td>
+                            <td class="fw-bold">${namaSiswa}</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-danger" onclick="hapusUser('${uid}', '${namaSiswa}')">
+                                    <i class="fa-solid fa-trash"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>`;
+                }
+                totalLabel.innerText = (no - 1) + " Terdaftar";
+            } else {
+                totalLabel.innerText = "0 Terdaftar";
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Belum ada data siswa.</td></tr>`;
+            }
+        });
+
+        window.simpanUser = function() {
+            let uid = document.getElementById('uidInput').value.trim().toUpperCase();
+            let nama = document.getElementById('namaInput').value.trim();
+
+            if (uid === "" || nama === "") {
+                alert("UID dan Nama Siswa tidak boleh kosong!");
+                return;
+            }
+
+            const targetUserRef = ref(db, 'users/' + uid);
+            set(targetUserRef, {
+                nama: nama
+            }).then(() => {
+                alert(`Data siswa ${nama} berhasil disimpan!`);
+                document.getElementById('formUser').reset();
+            }).catch(err => alert("Gagal menyimpan: " + err.message));
+        };
+
+        window.hapusUser = function(uid, namaSiswa) {
+            if(confirm(`Apakah Anda yakin ingin menghapus data ${namaSiswa} (UID: ${uid})? \nKartu ini tidak akan bisa digunakan absen lagi.`)) {
+                const targetUserRef = ref(db, 'users/' + uid);
+                remove(targetUserRef).then(() => {
+                    alert("Data siswa berhasil dihapus.");
+                }).catch(err => alert("Gagal menghapus: " + err.message));
+            }
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
